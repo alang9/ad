@@ -39,6 +39,8 @@ import Numeric.AD.Internal.Classes
 -- | @Tower@ is an AD 'Mode' that calculates a tangent tower by forward AD, and provides fast 'diffsUU', 'diffsUF'
 newtype Tower a = Tower { getTower :: [a] } deriving (Data, Typeable)
 
+type instance Domain Tower a = ()
+
 instance Show a => Show (Tower a) where
     showsPrec n (Tower as) = showParen (n > 10) $ showString "Tower " . showList as
 

@@ -1,5 +1,6 @@
 {-# LANGUAGE Rank2Types, TypeFamilies, FlexibleInstances, MultiParamTypeClasses, PatternGuards, CPP #-}
 {-# LANGUAGE FlexibleContexts, FunctionalDependencies, UndecidableInstances, GeneralizedNewtypeDeriving, TemplateHaskell #-}
+{-# LANGUAGE ConstraintKinds, KindSignatures #-}
 -- {-# OPTIONS_HADDOCK hide #-}
 -----------------------------------------------------------------------------
 -- |
@@ -24,18 +25,28 @@ module Numeric.AD.Internal.Classes
     , deriveNumeric
     , Lifted(..)
     , Iso(..)
+    , Domain, Domain'
     ) where
 
 import Control.Applicative hiding ((<**>))
 import Data.Char
 import Data.Function (on)
 import Data.Number.Erf
+import GHC.Exts
 import Language.Haskell.TH
 
 infixr 8 **!, <**>
 infixl 7 *!, /!, ^*, *^, ^/
 infixl 6 +!, -!, <+>
 infix 4 ==!
+
+type family Domain (t :: * -> *) a :: Constraint
+
+-- | Domain' is a workaround because GHC is unable to reify an
+-- "irreducible predicate" when trying to reify a typeclass which mentions Domain
+class Domain t a => Domain' t a
+
+instance Domain t a => Domain' t a
 
 class Iso a b where
     iso :: f a -> f b
@@ -46,79 +57,79 @@ instance Iso a a where
     osi = id
 
 class Lifted t where
-    showsPrec1          :: (Num a, Show a) => Int -> t a -> ShowS
-    (==!)               :: (Num a, Eq a) => t a -> t a -> Bool
-    compare1            :: (Num a, Ord a) => t a -> t a -> Ordering
-    fromInteger1        :: Num a => Integer -> t a
-    (+!),(-!),(*!)      :: Num a => t a -> t a -> t a
-    negate1, abs1, signum1 :: Num a => t a -> t a
-    (/!)                :: Fractional a => t a -> t a -> t a
-    recip1              :: Fractional a => t a -> t a
-    fromRational1       :: Fractional a => Rational -> t a
-    toRational1         :: Real a => t a -> Rational -- unsafe
-    pi1                 :: Floating a => t a
-    exp1, log1, sqrt1   :: Floating a => t a -> t a
-    (**!), logBase1     :: Floating a => t a -> t a -> t a
-    sin1, cos1, tan1, asin1, acos1, atan1 :: Floating a => t a -> t a
-    sinh1, cosh1, tanh1, asinh1, acosh1, atanh1 :: Floating a => t a -> t a
-    properFraction1 :: (RealFrac a, Integral b) => t a -> (b, t a)
-    truncate1, round1, ceiling1, floor1 :: (RealFrac a, Integral b) => t a -> b
-    floatRadix1     :: RealFloat a => t a -> Integer
-    floatDigits1    :: RealFloat a => t a -> Int
-    floatRange1     :: RealFloat a => t a -> (Int, Int)
-    decodeFloat1    :: RealFloat a => t a -> (Integer, Int)
-    encodeFloat1    :: RealFloat a => Integer -> Int -> t a
-    exponent1       :: RealFloat a => t a -> Int
-    significand1    :: RealFloat a => t a -> t a
-    scaleFloat1     :: RealFloat a => Int -> t a -> t a
-    isNaN1, isInfinite1, isDenormalized1, isNegativeZero1, isIEEE1 :: RealFloat a => t a -> Bool
-    atan21          :: RealFloat a => t a -> t a -> t a
-    succ1, pred1    :: (Num a, Enum a) => t a -> t a
-    toEnum1         :: (Num a, Enum a) => Int -> t a
-    fromEnum1       :: (Num a, Enum a) => t a -> Int
-    enumFrom1       :: (Num a, Enum a) => t a -> [t a]
-    enumFromThen1   :: (Num a, Enum a) => t a -> t a -> [t a]
-    enumFromTo1     :: (Num a, Enum a) => t a -> t a -> [t a]
-    enumFromThenTo1 :: (Num a, Enum a) => t a -> t a -> t a -> [t a]
-    minBound1       :: (Num a, Bounded a) => t a
-    maxBound1       :: (Num a, Bounded a) => t a
-    erf1            :: Erf a => t a -> t a
-    erfc1           :: Erf a => t a -> t a
-    normcdf1        :: Erf a => t a -> t a
-    inverf1         :: InvErf a => t a -> t a
-    inverfc1        :: InvErf a => t a -> t a
-    invnormcdf1     :: InvErf a => t a -> t a
+    showsPrec1          :: (Domain' t a, Num a, Show a) => Int -> t a -> ShowS
+    (==!)               :: (Domain' t a, Num a, Eq a) => t a -> t a -> Bool
+    compare1            :: (Domain' t a, Num a, Ord a) => t a -> t a -> Ordering
+    fromInteger1        :: (Domain' t a, Num a) => Integer -> t a
+    (+!),(-!),(*!)      :: (Domain' t a, Num a) => t a -> t a -> t a
+    negate1, abs1, signum1 :: (Domain' t a, Num a) => t a -> t a
+    (/!)                :: (Domain' t a, Fractional a) => t a -> t a -> t a
+    recip1              :: (Domain' t a, Fractional a) => t a -> t a
+    fromRational1       :: (Domain' t a, Fractional a) => Rational -> t a
+    toRational1         :: (Domain' t a, Real a) => t a -> Rational -- unsafe
+    pi1                 :: (Domain' t a, Floating a) => t a
+    exp1, log1, sqrt1   :: (Domain' t a, Floating a) => t a -> t a
+    (**!), logBase1     :: (Domain' t a, Floating a) => t a -> t a -> t a
+    sin1, cos1, tan1, asin1, acos1, atan1 :: (Domain' t a, Floating a) => t a -> t a
+    sinh1, cosh1, tanh1, asinh1, acosh1, atanh1 :: (Domain' t a, Floating a) => t a -> t a
+    properFraction1 :: (Domain' t a, RealFrac a, Integral b) => t a -> (b, t a)
+    truncate1, round1, ceiling1, floor1 :: (Domain' t a, RealFrac a, Integral b) => t a -> b
+    floatRadix1     :: (Domain' t a, RealFloat a) => t a -> Integer
+    floatDigits1    :: (Domain' t a, RealFloat a) => t a -> Int
+    floatRange1     :: (Domain' t a, RealFloat a) => t a -> (Int, Int)
+    decodeFloat1    :: (Domain' t a, RealFloat a) => t a -> (Integer, Int)
+    encodeFloat1    :: (Domain' t a, RealFloat a) => Integer -> Int -> t a
+    exponent1       :: (Domain' t a, RealFloat a) => t a -> Int
+    significand1    :: (Domain' t a, RealFloat a) => t a -> t a
+    scaleFloat1     :: (Domain' t a, RealFloat a) => Int -> t a -> t a
+    isNaN1, isInfinite1, isDenormalized1, isNegativeZero1, isIEEE1 :: (Domain' t a, RealFloat a) => t a -> Bool
+    atan21          :: (Domain' t a, RealFloat a) => t a -> t a -> t a
+    succ1, pred1    :: (Domain' t a, Num a, Enum a) => t a -> t a
+    toEnum1         :: (Domain' t a, Num a, Enum a) => Int -> t a
+    fromEnum1       :: (Domain' t a, Num a, Enum a) => t a -> Int
+    enumFrom1       :: (Domain' t a, Num a, Enum a) => t a -> [t a]
+    enumFromThen1   :: (Domain' t a, Num a, Enum a) => t a -> t a -> [t a]
+    enumFromTo1     :: (Domain' t a, Num a, Enum a) => t a -> t a -> [t a]
+    enumFromThenTo1 :: (Domain' t a, Num a, Enum a) => t a -> t a -> t a -> [t a]
+    minBound1       :: (Domain' t a, Num a, Bounded a) => t a
+    maxBound1       :: (Domain' t a, Num a, Bounded a) => t a
+    erf1            :: (Domain' t a, Erf a) => t a -> t a
+    erfc1           :: (Domain' t a, Erf a) => t a -> t a
+    normcdf1        :: (Domain' t a, Erf a) => t a -> t a
+    inverf1         :: (Domain' t a, InvErf a) => t a -> t a
+    inverfc1        :: (Domain' t a, InvErf a) => t a -> t a
+    invnormcdf1     :: (Domain' t a, InvErf a) => t a -> t a
 
 class Lifted t => Mode t where
     -- | allowed to return False for items with a zero derivative, but we'll give more NaNs than strictly necessary
-    isKnownConstant :: t a -> Bool
+    isKnownConstant :: (Domain t a) => t a -> Bool
     isKnownConstant _ = False
 
     -- | allowed to return False for zero, but we give more NaN's than strictly necessary then
-    isKnownZero :: Num a => t a -> Bool
+    isKnownZero :: (Domain t a, Num a) => t a -> Bool
     isKnownZero _ = False
 
     -- | Embed a constant
-    auto  :: Num a => a -> t a
+    auto  :: (Domain t a, Num a) => a -> t a
 
     -- | Vector sum
-    (<+>) :: Num a => t a -> t a -> t a
+    (<+>) :: (Domain t a, Num a) => t a -> t a -> t a
 
     -- | Scalar-vector multiplication
-    (*^) :: Num a => a -> t a -> t a
+    (*^) :: (Domain t a, Num a) => a -> t a -> t a
 
     -- | Vector-scalar multiplication
-    (^*) :: Num a => t a -> a -> t a
+    (^*) :: (Domain t a, Num a) => t a -> a -> t a
 
     -- | Scalar division
-    (^/) :: Fractional a => t a -> a -> t a
+    (^/) :: (Domain t a, Fractional a) => t a -> a -> t a
 
     -- | Exponentiation, this should be overloaded if you can figure out anything about what is constant!
-    (<**>) :: Floating a => t a -> t a -> t a
---  x <**> y = lift2_ (**) (\z xi yi -> (yi *! z /! xi, z *! log1 xi)) x y
+    (<**>) :: (Domain t a, Floating a) => t a -> t a -> t a
+--  x <**> y = lift2_ (Domain t a, **) (\z xi yi -> (yi *! z /! xi, z *! log1 xi)) x y
 
     -- | > 'zero' = 'lift' 0
-    zero :: Num a => t a
+    zero :: (Domain t a, Num a) => t a
 
     a *^ b = auto a *! b
     a ^* b = a *! auto b
@@ -127,11 +138,11 @@ class Lifted t => Mode t where
 
     zero = auto 0
 
-one :: (Mode t, Num a) => t a
+one :: (Domain t a, Mode t, Num a) => t a
 one = auto 1
 {-# INLINE one #-}
 
-negOne :: (Mode t, Num a) => t a
+negOne :: (Domain t a, Mode t, Num a) => t a
 negOne = auto (-1)
 {-# INLINE negOne #-}
 
@@ -145,7 +156,7 @@ negOne = auto (-1)
 -- by the universal quantification on the various combinators we expose.
 
 class Primal t where
-    primal :: Num a => t a -> a
+    primal :: (Domain t a, Num a) => t a -> a
 
 -- | 'Jacobian' is used by 'deriveMode' but is not exposed
 -- via 'Mode' to prevent its abuse by end users
@@ -153,38 +164,38 @@ class Primal t where
 class (Mode t, Mode (D t)) => Jacobian t where
     type D t :: * -> *
 
-    unary  :: Num a => (a -> a) -> D t a -> t a -> t a
-    lift1  :: Num a => (a -> a) -> (D t a -> D t a) -> t a -> t a
-    lift1_ :: Num a => (a -> a) -> (D t a -> D t a -> D t a) -> t a -> t a
+    unary  :: (Domain t a, Num a) => (a -> a) -> D t a -> t a -> t a
+    lift1  :: (Domain t a, Num a) => (a -> a) -> (D t a -> D t a) -> t a -> t a
+    lift1_ :: (Domain t a, Num a) => (a -> a) -> (D t a -> D t a -> D t a) -> t a -> t a
 
-    binary :: Num a => (a -> a -> a) -> D t a -> D t a -> t a -> t a -> t a
-    lift2  :: Num a => (a -> a -> a) -> (D t a -> D t a -> (D t a, D t a)) -> t a -> t a -> t a
-    lift2_ :: Num a => (a -> a -> a) -> (D t a -> D t a -> D t a -> (D t a, D t a)) -> t a -> t a -> t a
+    binary :: (Domain t a, Num a) => (a -> a -> a) -> D t a -> D t a -> t a -> t a -> t a
+    lift2  :: (Domain t a, Num a) => (a -> a -> a) -> (D t a -> D t a -> (D t a, D t a)) -> t a -> t a -> t a
+    lift2_ :: (Domain t a, Num a) => (a -> a -> a) -> (D t a -> D t a -> D t a -> (D t a, D t a)) -> t a -> t a -> t a
 
-withPrimal :: (Jacobian t, Num a) => t a -> a -> t a
+withPrimal :: (Domain t a, Domain (D t) a, Jacobian t, Num a) => t a -> a -> t a
 withPrimal t a = unary (const a) one t
 {-# INLINE withPrimal #-}
 
-fromBy :: (Jacobian t, Num a) => t a -> t a -> Int -> a -> t a
+fromBy :: (Domain t a, Domain (D t) a, Jacobian t, Num a) => t a -> t a -> Int -> a -> t a
 fromBy a delta n x = binary (\_ _ -> x) one (fromIntegral1 n) a delta
 
-fromIntegral1 :: (Integral n, Lifted t, Num a) => n -> t a
+fromIntegral1 :: (Domain t a, Integral n, Lifted t, Num a) => n -> t a
 fromIntegral1 = fromInteger1 . fromIntegral
 {-# INLINE fromIntegral1 #-}
 
-square1 :: (Lifted t, Num a) => t a -> t a
+square1 :: (Domain t a, Lifted t, Num a) => t a -> t a
 square1 x = x *! x
 {-# INLINE square1 #-}
 
-discrete1 :: (Primal t, Num a) => (a -> c) -> t a -> c
+discrete1 :: (Domain t a, Primal t, Num a) => (a -> c) -> t a -> c
 discrete1 f x = f (primal x)
 {-# INLINE discrete1 #-}
 
-discrete2 :: (Primal t, Num a) => (a -> a -> c) -> t a -> t a -> c
+discrete2 :: (Domain t a, Primal t, Num a) => (a -> a -> c) -> t a -> t a -> c
 discrete2 f x y = f (primal x) (primal y)
 {-# INLINE discrete2 #-}
 
-discrete3 :: (Primal t, Num a) => (a -> a -> a -> d) -> t a -> t a -> t a -> d
+discrete3 :: (Domain t a, Primal t, Num a) => (a -> a -> a -> d) -> t a -> t a -> t a -> d
 discrete3 f x y z = f (primal x) (primal y) (primal z)
 {-# INLINE discrete3 #-}
 
@@ -312,22 +323,23 @@ liftedMembers = do
 -- > instance ('Lifted' $f, 'RealFloat' a) => 'RealFloat' ($g a)
 -- > instance ('Lifted' $f, 'RealFrac' a) => 'RealFrac' ($g a)
 -- > instance ('Lifted' $f, 'Real' a) => 'Real' ($g a)
-deriveNumeric :: ([Q Pred] -> [Q Pred]) -> Q Type -> Q [Dec]
+deriveNumeric :: (Q Type -> [Q Pred] -> [Q Pred]) -> Q Type -> Q [Dec]
 deriveNumeric f t = do
     members <- liftedMembers
     let keep n = nameBase n `elem` members
-    xs <- lowerInstance keep ((classP ''Num [varA]:) . f) t `mapM` [''Enum, ''Eq, ''Ord, ''Bounded, ''Show]
-    ys <- lowerInstance keep f                            t `mapM` [''Num, ''Fractional, ''Floating, ''RealFloat,''RealFrac, ''Real, ''Erf, ''InvErf]
+    xs <- lowerInstance keep f'  t `mapM` [''Enum, ''Eq, ''Ord, ''Bounded, ''Show]
+    ys <- lowerInstance keep f   t `mapM` [''Num, ''Fractional, ''Floating, ''RealFloat,''RealFrac, ''Real, ''Erf, ''InvErf]
     return (xs ++ ys)
-
-lowerInstance :: (Name -> Bool) -> ([Q Pred] -> [Q Pred]) -> Q Type -> Name -> Q Dec
+    where
+        f' a b = classP ''Num [varA] : f a b
+lowerInstance :: (Name -> Bool) -> (Q Type -> [Q Pred] -> [Q Pred]) -> Q Type -> Name -> Q Dec
 lowerInstance p f t n = do
 #ifdef OldClassI
     ClassI (ClassD _ _ _ _ ds) <- reify n
 #else
     ClassI (ClassD _ _ _ _ ds) _ <- reify n
 #endif
-    instanceD (cxt (f [classP n [varA]]))
+    instanceD (cxt (f varA [classP n [varA]]))
               (conT n `appT` (t `appT` varA))
               (concatMap lower1 ds)
     where

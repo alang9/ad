@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, Rank2Types, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, ScopedTypeVariables, TemplateHaskell, GADTs, TypeFamilies, DeriveDataTypeable, FlexibleContexts #-}
+{-# LANGUAGE ConstraintKinds, CPP, Rank2Types, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, ScopedTypeVariables, TemplateHaskell, GADTs, TypeFamilies, DeriveDataTypeable, FlexibleContexts #-}
 -- {-# OPTIONS_HADDOCK hide, prune #-}
 -----------------------------------------------------------------------------
 -- |
@@ -106,6 +106,8 @@ data Reverse s a where
   Reverse :: {-# UNPACK #-} !Int -> a -> Reverse s a
   deriving (Show, Typeable)
 #endif
+
+type instance Domain (Reverse s) a = ()
 
 instance (Reifies s Tape, Lifted (Reverse s)) => Mode (Reverse s) where
   isKnownZero Zero = True

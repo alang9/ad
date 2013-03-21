@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE Rank2Types, GeneralizedNewtypeDeriving, TemplateHaskell, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances #-}
+{-# LANGUAGE Rank2Types, GeneralizedNewtypeDeriving, TemplateHaskell, TypeFamilies, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances #-}
 {-# OPTIONS_HADDOCK hide #-}
 -----------------------------------------------------------------------------
 -- |
@@ -36,12 +36,14 @@ import Numeric.AD.Internal.Classes
 -- interchangeably as both the type level \"brand\" and dictionary, providing a common API.
 newtype AD f s a = AD { runAD :: f a } deriving (Iso (f a), Lifted, Mode, Primal)
 
+type instance Domain (AD f s) a = Domain f a
+
 -- > instance (Lifted f, Num a) => Num (AD f a)
 -- etc.
 let f = varT (mkName "f")
     s = varT (mkName "s") in
     deriveNumeric
-        (classP ''Lifted [f]:)
+        (\a b -> classP ''Domain' [f, a]:classP ''Lifted [f]:b)
         (conT ''AD `appT` f `appT` s)
 
 instance Typeable1 f => Typeable1 (AD f s) where

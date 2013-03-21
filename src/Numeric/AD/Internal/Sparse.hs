@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, TemplateHaskell, TypeFamilies, TypeOperators, FlexibleContexts, UndecidableInstances, DeriveDataTypeable, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
+{-# LANGUAGE BangPatterns, ConstraintKinds, TemplateHaskell, TypeFamilies, TypeOperators, FlexibleContexts, UndecidableInstances, DeriveDataTypeable, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 module Numeric.AD.Internal.Sparse
     ( Index(..)
@@ -54,6 +54,8 @@ data Sparse a
   = Sparse !a (IntMap (Sparse a))
   | Zero
   deriving (Show, Data, Typeable)
+
+type instance Domain Sparse a = ()
 
 -- | drop keys below a given value
 dropMap :: Int -> IntMap a -> IntMap a

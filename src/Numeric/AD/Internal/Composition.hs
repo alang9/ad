@@ -84,6 +84,8 @@ instance (Typeable1 f, Typeable1 g, Data (f (g a)), Data a) => Data (ComposeFunc
 -- | The composition of two AD modes is an AD mode in its own right
 newtype ComposeMode f g s a = ComposeMode { runComposeMode :: f (AD g s a) }
 
+type instance Domain (ComposeMode f g s) a = (Domain f (AD g s a), Domain g a)
+
 composeMode :: AD f s' (AD g s a) -> AD (ComposeMode f g s) s' a
 composeMode (AD a) = AD (ComposeMode a)
 

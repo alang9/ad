@@ -46,6 +46,8 @@ data Forward a
   | Zero
   deriving (Show, Data, Typeable)
 
+type instance Domain Forward a = ()
+
 -- | Calculate the 'tangent' using forward mode AD.
 tangent :: Num a => AD Forward s a -> a
 tangent (AD (Forward _ da)) = da

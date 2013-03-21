@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds, TypeFamilies #-}
 -- {-# OPTIONS_HADDOCK hide, prune #-}
 -----------------------------------------------------------------------------
 -- |
@@ -49,19 +50,21 @@ bind xs = (r,(0,hi)) where
   (r,hi) = runS (mapM freshVar xs) 0
   freshVar a = S (\s -> let s' = s + 1 in s' `seq` (var a s, s'))
 
-unbind :: (Functor f, Var v)  => f (v a) -> Array Int a -> f a
+unbind :: (Domain v a, Functor f, Var v)  => f (v a) -> Array Int a -> f a
 unbind xs ys = fmap (\v -> ys ! varId v) xs
 
-unbindWith :: (Functor f, Var v, Num a) => (a -> b -> c) -> f (v a) -> Array Int b -> f c
+unbindWith :: (Domain v a, Functor f, Var v, Num a) => (a -> b -> c) -> f (v a) -> Array Int b -> f c
 unbindWith f xs ys = fmap (\v -> f (primal v) (ys ! varId v)) xs
 
-unbindMap :: (Functor f, Var v, Num a) => f (v a) -> IntMap a -> f a
+unbindMap :: (Domain v a, Functor f, Var v, Num a) => f (v a) -> IntMap a -> f a
 unbindMap xs ys = fmap (\v -> findWithDefault 0 (varId v) ys) xs
 
-unbindMapWithDefault :: (Functor f, Var v, Num a) => b -> (a -> b -> c) -> f (v a) -> IntMap b -> f c
+unbindMapWithDefault :: (Domain v a, Functor f, Var v, Num a) => b -> (a -> b -> c) -> f (v a) -> IntMap b -> f c
 unbindMapWithDefault z f xs ys = fmap (\v -> f (primal v) $ findWithDefault z (varId v) ys) xs
 
 data Variable a = Variable a {-# UNPACK #-} !Int
+
+type instance Domain Variable a = ()
 
 instance Var Variable where
   var = Variable
