@@ -112,37 +112,8 @@ library
     template-haskell >= 2.5 && < 3
 
   exposed-modules:
-    Numeric.AD
-    Numeric.AD.Types
-
-    Numeric.AD.Newton
-    Numeric.AD.Halley
-
-    Numeric.AD.Mode.Directed
-    Numeric.AD.Mode.Forward
-    Numeric.AD.Mode.Kahn
-    Numeric.AD.Mode.Reverse
-    Numeric.AD.Mode.Tower
-    Numeric.AD.Mode.Sparse
-
-    Numeric.AD.Variadic
-    Numeric.AD.Variadic.Kahn
-    Numeric.AD.Variadic.Sparse
-
     Numeric.AD.Internal.Classes
-    Numeric.AD.Internal.Combinators
-    Numeric.AD.Internal.Forward
     Numeric.AD.Internal.Tower
-    Numeric.AD.Internal.Kahn
-    Numeric.AD.Internal.Reverse
-    Numeric.AD.Internal.Var
-    Numeric.AD.Internal.Sparse
-    Numeric.AD.Internal.Dense
-    Numeric.AD.Internal.Composition
-
-  other-modules:
-    Numeric.AD.Internal.Jet
-    Numeric.AD.Internal.Identity
 
   if flag(lib-Werror)
     ghc-options: -Werror
