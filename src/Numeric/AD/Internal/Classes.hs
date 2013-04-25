@@ -97,7 +97,7 @@ infixl 7 ^*
 infixr 7 ^/
 infixr 8 <**>
 
-class (Num (Scalar t)) => Mode t where
+class (Num (Scalar t), Num t) => Mode t where
     -- | allowed to return False for items with a zero derivative, but we'll give more NaNs than strictly necessary
     isKnownConstant :: t -> Bool
     isKnownConstant _ = False
@@ -110,7 +110,7 @@ class (Num (Scalar t)) => Mode t where
     auto  :: Scalar t -> t
 
     -- | Vector sum
-    (<+>) :: Num (Scalar t) => t -> t -> t
+    (<+>) :: t -> t -> t
 
     -- | Scalar-vector multiplication
     (*^) :: Scalar t -> t -> t
