@@ -13,23 +13,9 @@
 -----------------------------------------------------------------------------
 
 module Numeric.AD.Internal.Tower
-    ( Tower(..)
-    , zeroPad
-    , zeroPadF
-    , transposePadF
-    , d
-    , d'
-    , withD
-    , tangents
-    , bundle
-    , apply
-    , getADTower
-    , tower
-    ) where
+    () where
 
 import Prelude hiding (all)
-import Control.Applicative hiding ((<**>))
-import Data.Foldable
 import Data.Data (Data)
 import Data.Typeable (Typeable)
 import Language.Haskell.TH
@@ -45,36 +31,6 @@ instance Show a => Show (Tower s a) where
 
 -- Local combinators
 
-zeroPad :: Num a => [a] -> [a]
-zeroPad xs = xs ++ repeat 0
-{-# INLINE zeroPad #-}
-
-zeroPadF :: (Functor f, Num a) => [f a] -> [f a]
-zeroPadF fxs@(fx:_) = fxs ++ repeat (const 0 <$> fx)
-zeroPadF _ = error "zeroPadF :: empty list"
-{-# INLINE zeroPadF #-}
-
-transposePadF :: (Foldable f, Functor f) => a -> f [a] -> [f a]
-transposePadF pad fx
-    | all null fx = []
-    | otherwise = fmap headPad fx : transposePadF pad (drop1 <$> fx)
-    where
-        headPad [] = pad
-        headPad (x:_) = x
-        drop1 (_:xs) = xs
-        drop1 xs = xs
-
-d :: Num a => [a] -> a
-d (_:da:_) = da
-d _ = 0
-{-# INLINE d #-}
-
-d' :: Num a => [a] -> (a, a)
-d' (a:da:_) = (a, da)
-d' (a:_)    = (a, 0)
-d' _        = (0, 0)
-{-# INLINE d' #-}
-
 tangents :: Tower s a -> Tower s a
 tangents (Tower []) = Tower []
 tangents (Tower (_:xs)) = Tower xs
@@ -88,21 +44,6 @@ truncated _ = False
 bundle :: a -> Tower s a -> Tower s a
 bundle a (Tower as) = Tower (a:as)
 {-# INLINE bundle #-}
-
-withD :: (a, a) -> Tower s a
-withD (a, da) = Tower [a,da]
-{-# INLINE withD #-}
-
-apply :: Num a => (Tower s a -> b) -> a -> b
-apply f a = f (Tower [a,1])
-{-# INLINE apply #-}
-
-getADTower :: Tower s a -> [a]
-getADTower = getTower
-{-# INLINE getADTower #-}
-
-tower :: [a] -> Tower s a
-tower = Tower
 
 instance Num a => Primal (Tower s a) where
     primal (Tower (x:_)) = x
