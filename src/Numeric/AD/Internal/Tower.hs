@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, Rank2Types, TypeFamilies, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, TemplateHaskell, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, Rank2Types, TypeFamilies, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, DeriveDataTypeable #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 -- {-# OPTIONS_HADDOCK hide, prune #-}
 -----------------------------------------------------------------------------
@@ -16,7 +16,6 @@ module Numeric.AD.Internal.Tower
     () where
 
 import Control.Monad
-import Prelude hiding (all)
 import Numeric.AD.Internal.Classes
 
 -- | @Tower@ is an AD 'Mode' that calculates a tangent tower by forward AD, and provides fast 'diffsUU', 'diffsUF'
