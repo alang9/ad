@@ -1,5 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
-{-- LANGUAGE Rank2Types, TypeFamilies, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies, FlexibleContexts #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 -- {-# OPTIONS_HADDOCK hide, prune #-}
 -----------------------------------------------------------------------------
@@ -13,16 +12,25 @@
 --
 -----------------------------------------------------------------------------
 
-module Numeric.AD.Internal.Tower
-    () where
+module Numeric.AD.Internal.Tower () where
 
 import Control.Monad
-import Numeric.AD.Internal.Classes
 
 -- | @Tower@ is an AD 'Mode' that calculates a tangent tower by forward AD, and provides fast 'diffsUU', 'diffsUF'
+
+type family Scalar t
+
 newtype Tower s a = Tower [a]
 
 type instance Scalar (Tower s a) = a
+
+class (Num (Scalar t), Num t) => Mode t where
+    auto  :: Scalar t -> t
+    (<+>) :: t -> t -> t
+
+one :: Mode t => t
+one = auto 1
+{-# INLINE one #-}
 
 instance Show a => Show (Tower s a) where
     showsPrec n (Tower as) = showParen (n > 10) $ showString "Tower " . showList as
@@ -43,9 +51,8 @@ bundle :: a -> Tower s a -> Tower s a
 bundle a (Tower as) = Tower (a:as)
 {-# INLINE bundle #-}
 
-instance Num a => Primal (Tower s a) where
-    primal (Tower (x:_)) = x
-    primal _ = 0
+primal (Tower (x:_)) = x
+primal _ = 0
 
 instance (Num a) => Mode (Tower s a) where
     auto a = Tower [a]
