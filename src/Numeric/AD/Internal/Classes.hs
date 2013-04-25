@@ -1,6 +1,4 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DefaultSignatures, Rank2Types, TypeFamilies, FlexibleInstances, MultiParamTypeClasses, PatternGuards, CPP #-}
-{-# LANGUAGE FlexibleContexts, FunctionalDependencies, UndecidableInstances, GeneralizedNewtypeDeriving, TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies, FlexibleContexts #-}
 -- {-# OPTIONS_HADDOCK hide #-}
 -----------------------------------------------------------------------------
 -- |
@@ -20,19 +18,10 @@ module Numeric.AD.Internal.Classes
     , one
     -- * Automatically Deriving AD
     , Primal(..)
-    , Iso(..)
     , Scalar
     ) where
 
 type family Scalar t
-
-class Iso a b where
-    iso :: f a -> f b
-    osi :: f b -> f a
-
-instance Iso a a where
-    iso = id
-    osi = id
 
 class (Num (Scalar t), Num t) => Mode t where
     auto  :: Scalar t -> t
