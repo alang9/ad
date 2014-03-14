@@ -99,7 +99,7 @@ library
     UndecidableInstances
 
   build-depends:
-    array            >= 0.2 && < 0.5,
+    array            >= 0.2 && < 0.6,
     base             == 4.*,
     comonad          >= 3,
     containers       >= 0.2 && < 0.6,
