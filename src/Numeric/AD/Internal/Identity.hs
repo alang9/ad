@@ -23,9 +23,14 @@ import Data.Monoid
 import Data.Number.Erf
 import Data.Typeable (Typeable)
 import Numeric.AD.Internal.Classes
+import Unsafe.Coerce
 
 newtype Id s a = Id { runId :: a } deriving
-    (Iso a, Eq, Ord, Show, Enum, Bounded, Num, Real, Fractional, Floating, RealFrac, RealFloat, Monoid, Data, Typeable, Erf, InvErf)
+    (Eq, Ord, Show, Enum, Bounded, Num, Real, Fractional, Floating, RealFrac, RealFloat, Monoid, Data, Typeable, Erf, InvErf)
+
+instance Iso a (Id s a) where
+    iso = unsafeCoerce
+    osi = unsafeCoerce
 
 type instance Scalar (Id s a) = a
 
